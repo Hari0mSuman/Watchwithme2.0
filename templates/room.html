@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WatchWithMe - Room {{ room_code }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <!-- Pending Approval Modal -->
+    {% if pending_approval %}
+    <div id="pending-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-gray-800 rounded-xl p-8 max-w-md w-full mx-4 border border-gray-700">
+            <div class="text-center">
+                <div class="mx-auto h-16 w-16 bg-yellow-500 rounded-full flex items-center justify-center mb-4">
+                    <i class="fas fa-clock text-2xl text-white"></i>
+                </div>
+                <h2 class="text-2xl font-bold mb-2">Waiting for Approval</h2>
+                <p class="text-gray-400 mb-6">The host needs to approve your request to join this room.</p>
+                <div class="flex space-x-3">
+                    <button onclick="window.location.href='/'" 
+                            class="flex-1 bg-gray-700 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors">
+                        Go Back
+                    </button>
+                    <button onclick="location.reload()" 
+                            class="flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors">
+                        Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Header -->
+    <header class="bg-gray-800 border-b border-gray-700 p-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <a href="/" class="text-purple-400 hover:text-purple-300">
+                    <i class="fas fa-arrow-left text-xl"></i>
+                </a>
+                <h1 class="text-xl font-bold">WatchWithMe</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="bg-gray-700 px-3 py-1 rounded-lg">
+                    <span class="text-sm text-gray-300">Room:</span>
+                    <span class="font-mono text-purple-400">{{ room_code }}</span>
+                </div>
+                <div class="bg-gray-700 px-3 py-1 rounded-lg">
+                    <span class="text-sm text-gray-300">{{ username }}</span>
+                    {% if is_host %}
+                    <span class="ml-2 text-xs bg-purple-600 px-2 py-0.5 rounded">HOST</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex flex-col lg:flex-row min-h-screen">
+        <!-- Main Video Area -->
+        <div class="flex-1 p-4">
+            <!-- Video Controls -->
+            <div class="bg-gray-800 rounded-xl p-4 mb-4">
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <!-- YouTube URL Input -->
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">YouTube URL</label>
+                        <div class="flex gap-2">
+                            <input type="url" id="youtube-url" placeholder="https://www.youtube.com/watch?v=..."
+                                   class="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder-gray-400">
+                            <button id="set-youtube-btn" 
+                                    class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                                <i class="fab fa-youtube mr-1"></i>
+                                Set
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- File Upload -->
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Upload Video</label>
+                        <div class="flex gap-2">
+                            <input type="file" id="video-upload" accept="video/*" class="hidden">
+                            <button id="upload-btn" 
+                                    class="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                                <i class="fas fa-upload mr-2"></i>
+                                Choose File
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload Progress -->
+                <div id="upload-progress" class="hidden mt-4">
+                    <div class="bg-gray-700 rounded-full h-2">
+                        <div id="progress-bar" class="bg-green-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <p id="progress-text" class="text-sm text-gray-400 mt-1">Uploading... 0%</p>
+                </div>
+            </div>
+
+            <!-- Video Player Container -->
+            <div class="bg-black rounded-xl overflow-hidden mb-4" style="aspect-ratio: 16/9;">
+                <div id="video-container" class="w-full h-full flex items-center justify-center text-gray-500">
+                    <div class="text-center">
+                        <i class="fas fa-video text-6xl mb-4"></i>
+                        <p class="text-xl">No video selected</p>
+                        <p class="text-sm mt-2">Share a YouTube link or upload a video to get started</p>
+                    </div>
+                </div>
+                
+                <!-- YouTube Player -->
+                <iframe id="youtube-player" class="w-full h-full hidden" frameborder="0" allowfullscreen></iframe>
+                
+                <!-- Local Video Player -->
+                <video id="local-player" class="w-full h-full hidden" controls>
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+
+            <!-- Video Controls -->
+            <div class="bg-gray-800 rounded-xl p-4">
+                <div class="flex items-center justify-center space-x-4">
+                    <button id="play-btn" class="bg-green-600 text-white p-3 rounded-full hover:bg-green-700 transition-colors">
+                        <i class="fas fa-play"></i>
+                    </button>
+                    <button id="pause-btn" class="bg-red-600 text-white p-3 rounded-full hover:bg-red-700 transition-colors">
+                        <i class="fas fa-pause"></i>
+                    </button>
+                    <div class="flex-1 mx-4">
+                        <input type="range" id="seek-bar" class="w-full" min="0" max="100" value="0">
+                    </div>
+                    <span id="time-display" class="text-sm text-gray-400 min-w-[80px]">00:00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Sidebar -->
+        <div class="lg:w-80 bg-gray-800 flex flex-col">
+            <!-- User List -->
+            <div class="p-4 border-b border-gray-700">
+                <h3 class="text-lg font-semibold mb-2 flex items-center">
+                    <i class="fas fa-users mr-2 text-purple-400"></i>
+                    Users (<span id="user-count">0</span>)
+                </h3>
+                <div id="user-list" class="space-y-1">
+                    <!-- Users will be populated here -->
+                </div>
+
+                <!-- Pending Users (Host Only) -->
+                {% if is_host %}
+                <div id="pending-section" class="mt-4 hidden">
+                    <h4 class="text-sm font-medium text-yellow-400 mb-2">
+                        <i class="fas fa-clock mr-1"></i>
+                        Pending Approval
+                    </h4>
+                    <div id="pending-list" class="space-y-2">
+                        <!-- Pending users will be populated here -->
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Chat Messages -->
+            <div class="flex-1 flex flex-col">
+                <div class="p-4 border-b border-gray-700">
+                    <h3 class="text-lg font-semibold flex items-center">
+                        <i class="fas fa-comments mr-2 text-green-400"></i>
+                        Chat
+                    </h3>
+                </div>
+                <div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3">
+                    <!-- Chat messages will be populated here -->
+                </div>
+                
+                <!-- Chat Input -->
+                <div class="p-4 border-t border-gray-700">
+                    <form id="chat-form" class="flex gap-2">
+                        <input type="text" id="chat-input" placeholder="Type a message..." 
+                               class="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder-gray-400">
+                        <button type="submit" 
+                                class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Pass data to JavaScript
+        window.roomData = {
+            room_code: "{{ room_code }}",
+            username: "{{ username }}",
+            is_host: {{ is_host|tojson }},
+            pending_approval: {{ pending_approval|tojson }}
+        };
+    </script>
+    <script src="{{ url_for('static', filename='js/room.js') }}"></script>
+</body>
+</html>

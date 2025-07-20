@@ -1,0 +1,91 @@
+Build a full-featured Flask web app called "WatchWithMe" that allows multiple users to watch videos together in real-time. The app should support both YouTube URLs and local video uploads. Include the following features:
+
+🔹 Core Features:
+
+1. Home page (index.html) to let users:
+
+   * Enter a username
+   * Join an existing room using a code
+   * Or create a new room with an optional password
+
+2. Room creation:
+
+   * Automatically generate a unique 6-character room code (A-Z, 0-9)
+   * Allow setting an optional room password
+
+3. User access:
+
+   * Only the room host can approve join requests
+   * If password is set, it must match to join
+   * Store sessions using Flask `session`
+
+🔹 Real-time Video Sync (with Flask-SocketIO):
+4\. Real-time synchronization of:
+
+* Play
+* Pause
+* Seek (jumping to time)
+* Current video timestamp
+
+5. All users in a room watch the same video together, fully in sync.
+
+🔹 Video Support:
+6\. YouTube Video Embed:
+
+* Users can paste YouTube URLs
+* Use embedded iframe player
+
+7. Local Video Upload:
+
+   * any one in that room  can upload
+   * Save file to `/uploads` folder
+   * Stream uploaded file using HTML5 `<video>` tag
+   * Show a progress bar when uploading
+   * any video files allowed
+
+🔹 Chat & Controls:
+8\. Real-time group chat inside the room
+9\. All members can:
+
+* Chat
+* Control video (play/pause/seek)
+* Share YouTube links or choose local video 
+
+🔹 UI Requirements:
+10\. Clean, modern dark mode UI using **TailwindCSS**
+11\. Include:
+
+* Room chat sidebar
+* Embedded player in the center
+* Room code display
+* Control buttons (Play, Pause, Upload, Share URL)
+* Responsive layout (desktop & mobile friendly)
+
+🔹 Backend Setup:
+12\. Use Flask + Flask-SocketIO (async\_mode='threading')
+13\. Use the following Python libraries:
+
+* Flask
+* Flask-SocketIO
+* Werkzeug (for file handling)
+
+14. Run server on:
+
+* host='0.0.0.0'
+* port=5000
+* debug=True
+
+🔹 Output:
+
+* Folder structure with:
+
+  * `app.py`
+  * `templates/index.html`, `room.html`
+  * `static/js/`, `static/css/`
+  * `uploads/` for storing local video files
+  * `requirements.txt`
+
+🔹 Bonus:
+
+* Ensure chat and video events are scoped per room using `join_room(room)`
+* Ensure uploaded file links are served securely using Flask `send_from_directory`

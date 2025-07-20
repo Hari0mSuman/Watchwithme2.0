@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WatchWithMe - Watch Videos Together</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="min-h-screen flex items-center justify-center px-4">
+        <div class="max-w-md w-full space-y-8">
+            <!-- Header -->
+            <div class="text-center">
+                <div class="mx-auto h-16 w-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mb-4">
+                    <i class="fas fa-play text-2xl text-white"></i>
+                </div>
+                <h1 class="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                    WatchWithMe
+                </h1>
+                <p class="mt-2 text-gray-400">Watch videos together in real-time</p>
+            </div>
+
+            <!-- Error Message -->
+            {% if request.args.get('error') %}
+            <div class="bg-red-500 bg-opacity-10 border border-red-500 text-red-300 px-4 py-3 rounded-lg">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                {{ request.args.get('error') }}
+            </div>
+            {% endif %}
+
+            <!-- Join Room Form -->
+            <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                    <i class="fas fa-sign-in-alt mr-2 text-green-400"></i>
+                    Join Room
+                </h2>
+                <form action="{{ url_for('join_room_request') }}" method="POST" class="space-y-4">
+                    <div>
+                        <label for="join-username" class="block text-sm font-medium text-gray-300 mb-2">
+                            Username
+                        </label>
+                        <input type="text" id="join-username" name="username" required
+                               class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder-gray-400"
+                               placeholder="Enter your username">
+                    </div>
+                    <div>
+                        <label for="room-code" class="block text-sm font-medium text-gray-300 mb-2">
+                            Room Code
+                        </label>
+                        <input type="text" id="room-code" name="room_code" required maxlength="6"
+                               class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder-gray-400 uppercase"
+                               placeholder="6-character code">
+                    </div>
+                    <div>
+                        <label for="join-password" class="block text-sm font-medium text-gray-300 mb-2">
+                            Password <span class="text-gray-500">(if required)</span>
+                        </label>
+                        <input type="password" id="join-password" name="password"
+                               class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder-gray-400"
+                               placeholder="Room password">
+                    </div>
+                    <button type="submit" 
+                            class="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 px-6 rounded-lg font-semibold hover:from-green-600 hover:to-emerald-600 transition-all duration-200 flex items-center justify-center">
+                        <i class="fas fa-sign-in-alt mr-2"></i>
+                        Join Room
+                    </button>
+                </form>
+            </div>
+
+            <!-- Divider -->
+            <div class="relative">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-700"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="px-2 bg-gray-900 text-gray-400">or</span>
+                </div>
+            </div>
+
+            <!-- Create Room Form -->
+            <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                    <i class="fas fa-plus-circle mr-2 text-purple-400"></i>
+                    Create New Room
+                </h2>
+                <form action="{{ url_for('create_room') }}" method="POST" class="space-y-4">
+                    <div>
+                        <label for="create-username" class="block text-sm font-medium text-gray-300 mb-2">
+                            Username
+                        </label>
+                        <input type="text" id="create-username" name="username" required
+                               class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder-gray-400"
+                               placeholder="Enter your username">
+                    </div>
+                    <div>
+                        <label for="create-password" class="block text-sm font-medium text-gray-300 mb-2">
+                            Password <span class="text-gray-500">(optional)</span>
+                        </label>
+                        <input type="password" id="create-password" name="password"
+                               class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder-gray-400"
+                               placeholder="Set room password">
+                    </div>
+                    <button type="submit" 
+                            class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 px-6 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all duration-200 flex items-center justify-center">
+                        <i class="fas fa-plus-circle mr-2"></i>
+                        Create Room
+                    </button>
+                </form>
+            </div>
+
+            <!-- Footer -->
+            <div class="text-center text-gray-500 text-sm">
+                <p>Share your room code with friends to watch together!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-uppercase room code input
+        document.getElementById('room-code').addEventListener('input', function(e) {
+            e.target.value = e.target.value.toUpperCase();
+        });
+    </script>
+</body>
+</html>

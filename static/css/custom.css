@@ -1,0 +1,196 @@
+/* Custom styles for WatchWithMe */
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #374151;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #6b7280;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* Custom range slider styling */
+input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #374151;
+    outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #8b5cf6;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #8b5cf6;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Chat messages smooth scrolling */
+#chat-messages {
+    scroll-behavior: smooth;
+}
+
+/* Upload progress animation */
+#progress-bar {
+    transition: width 0.3s ease-in-out;
+}
+
+/* Button hover effects */
+.btn-hover-scale {
+    transition: transform 0.2s ease-in-out;
+}
+
+.btn-hover-scale:hover {
+    transform: scale(1.05);
+}
+
+/* Video container responsive */
+@media (max-width: 768px) {
+    .lg\:w-80 {
+        width: 100%;
+        max-height: 40vh;
+    }
+    
+    #chat-messages {
+        max-height: 200px;
+    }
+}
+
+/* Loading spinner */
+.spinner {
+    border: 2px solid #374151;
+    border-top: 2px solid #8b5cf6;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Notification animations */
+.notification-enter {
+    opacity: 0;
+    transform: translateX(100px);
+    transition: all 0.3s ease-out;
+}
+
+.notification-enter-active {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.notification-exit {
+    opacity: 1;
+    transform: translateX(0);
+    transition: all 0.3s ease-in;
+}
+
+.notification-exit-active {
+    opacity: 0;
+    transform: translateX(100px);
+}
+
+/* Custom focus styles */
+input:focus, button:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
+}
+
+/* Video player custom controls */
+video::-webkit-media-controls-panel {
+    background-color: rgba(31, 41, 55, 0.8);
+}
+
+video::-webkit-media-controls-play-button,
+video::-webkit-media-controls-mute-button,
+video::-webkit-media-controls-fullscreen-button {
+    background-color: #8b5cf6;
+    border-radius: 50%;
+}
+
+/* Gradient text effect */
+.gradient-text {
+    background: linear-gradient(45deg, #8b5cf6, #ec4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Room code styling */
+.room-code {
+    font-family: 'Courier New', monospace;
+    letter-spacing: 2px;
+    font-weight: bold;
+}
+
+/* Dark mode optimizations */
+@media (prefers-color-scheme: dark) {
+    html {
+        color-scheme: dark;
+    }
+}
+
+/* Mobile responsiveness improvements */
+@media (max-width: 640px) {
+    .flex-col.sm\:flex-row {
+        gap: 2rem;
+    }
+    
+    .text-4xl {
+        font-size: 2.5rem;
+    }
+    
+    .p-6 {
+        padding: 1.5rem;
+    }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .bg-gray-800 {
+        background-color: #000000;
+        border: 1px solid #ffffff;
+    }
+    
+    .text-gray-400 {
+        color: #ffffff;
+    }
+}
