@@ -554,7 +554,7 @@ def handle_reject_user(data):
     except Exception as e:
         logging.error(f"Error rejecting user: {str(e)}")
         db.session.rollback()
- app.run(allow_unsafe_werkzeug=True)
+     app.run(allow_unsafe_werkzeug=True)
 if __name__ == '__main__':
    
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)
