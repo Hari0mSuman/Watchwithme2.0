@@ -13,6 +13,8 @@ services:
           property: connectionString
       - key: SESSION_SECRET
         generateValue: true
+      - key: FLASK_ENV
+        value: production
     healthCheckPath: /
     autoDeploy: true
 
