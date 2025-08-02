@@ -1,0 +1,784 @@
+{% extends "base.html" %}
+
+{% block title %}{{ room.name }} - WatchWithMe{% endblock %}
+
+{% block head %}
+<style>
+    .chat-container {
+        height: calc(100vh - 200px);
+    }
+    
+    .video-container {
+        height: calc(100vh - 150px);
+    }
+    
+    #chatMessages {
+        height: calc(100% - 120px);
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #4a5568 #2d3748;
+    }
+    
+    #chatMessages::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    #chatMessages::-webkit-scrollbar-track {
+        background: #2d3748;
+    }
+    
+    #chatMessages::-webkit-scrollbar-thumb {
+        background: #4a5568;
+        border-radius: 3px;
+    }
+    
+    .message {
+        animation: fadeIn 0.3s ease-in;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Mobile Optimizations */
+    @media (max-width: 770px) {
+        /* Enhanced mobile header */
+        .mobile-header {
+            padding: 1rem;
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+            border-bottom: 2px solid #4a5568;
+        }
+        
+        .mobile-header h1 {
+            font-size: 1.25rem;
+            line-height: 1.3;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .mobile-header p {
+            font-size: 0.875rem;
+            color: #a0aec0;
+            margin-top: 0.25rem;
+        }
+        
+        /* Enhanced mobile controls */
+        .mobile-controls {
+            padding: 1rem;
+            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+            border-bottom: 1px solid #718096;
+        }
+        
+        .mobile-controls .space-y-4 {
+            gap: 1rem;
+        }
+        
+        .mobile-controls input,
+        .mobile-controls button {
+            font-size: 0.875rem;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-controls input[type="text"] {
+            min-height: 48px;
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+            border: 2px solid #4a5568;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .mobile-controls input[type="text"]:focus {
+            border-color: #3182ce;
+            box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        .mobile-controls button {
+            min-height: 48px;
+            white-space: nowrap;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border: none;
+        }
+        
+        .mobile-controls button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        }
+        
+        .mobile-controls button:active {
+            transform: translateY(0);
+        }
+        
+        /* Enhanced mobile controls layout */
+        .mobile-controls .flex {
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .mobile-controls .flex.space-x-2 {
+            flex-direction: row;
+            gap: 0.75rem;
+        }
+        
+        #chatSidebar {
+            width: 100vw;
+            max-width: 95vw;
+            position: fixed;
+            right: 0;
+            top: 0;
+            height: 100vh;
+            z-index: 50;
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: -8px 0 32px rgba(0,0,0,0.4);
+            border-radius: 20px 0 0 20px;
+            display: flex;
+            flex-direction: column;
+            border-left: 2px solid #4a5568;
+        }
+        
+        #chatSidebar.open {
+            transform: translateX(0);
+        }
+        
+        #chatToggleBtn {
+            display: block !important;
+            position: fixed;
+            bottom: 1.5rem;
+            left: 1rem;
+            z-index: 60;
+            background: linear-gradient(135deg, #3182ce 0%, #2b6cb0 100%);
+            border: none;
+            box-shadow: 0 4px 12px rgba(49, 130, 206, 0.4);
+            transition: all 0.3s ease;
+        }
+        
+        #chatToggleBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(49, 130, 206, 0.5);
+        }
+        
+        #chatToggleBtn:active {
+            transform: translateY(0);
+        }
+        
+        .mobile-chat-header {
+            padding: 1.5rem 1rem;
+            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+            border-bottom: 2px solid #4a5568;
+            border-radius: 20px 0 0 0;
+        }
+        
+        .mobile-chat-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .mobile-members {
+            padding: 1rem;
+            border-bottom: 1px solid #4a5568;
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        .mobile-members h3 {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+        
+        .mobile-members .space-y-2 {
+            gap: 0.75rem;
+        }
+        
+        .mobile-members .flex {
+            padding: 0.75rem;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-members .flex:hover {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.06) 100%);
+            transform: translateY(-1px);
+        }
+        
+        #chatMessages {
+            padding: 1rem;
+            height: calc(100vh - 320px);
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+        }
+        
+        .mobile-chat-input {
+            padding: 1.5rem 1rem;
+            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+            border-top: 2px solid #4a5568;
+            border-radius: 0 0 20px 0;
+        }
+        
+        .mobile-chat-input form {
+            gap: 1rem;
+        }
+        
+        .mobile-chat-input input {
+            font-size: 0.875rem;
+            padding: 1rem;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+            border: 2px solid #4a5568;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-chat-input input:focus {
+            border-color: #3182ce;
+            box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        .mobile-chat-input button {
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #3182ce 0%, #2b6cb0 100%);
+            box-shadow: 0 4px 12px rgba(49, 130, 206, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-chat-input button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(49, 130, 206, 0.4);
+        }
+        
+        /* Video container mobile optimization */
+        .video-container {
+            height: calc(100vh - 120px);
+            background: linear-gradient(135deg, #000000 0%, #1a202c 100%);
+            position: relative;
+            overflow: hidden;
+            border-radius: 16px;
+            margin: 0.5rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        
+        /* YouTube player mobile optimization */
+        #youtubePlayer {
+            border-radius: 12px;
+            overflow: hidden;
+            width: 100% !important;
+            height: 100% !important;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+        
+        /* Local video mobile optimization */
+        #localVideo {
+            border-radius: 12px;
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+        
+        /* Fullscreen button mobile optimization */
+        #fullscreenButton {
+            font-size: 1.5rem;
+            padding: 1rem;
+            min-width: 56px;
+            min-height: 56px;
+            background: linear-gradient(135deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.6) 100%);
+            border: 2px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 50%;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+        
+        #fullscreenButton:hover {
+            transform: scale(1.1);
+            background: linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 100%);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        }
+        
+        /* Room header mobile optimization */
+        .mobile-room-header {
+            padding: 1rem;
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+            border-bottom: 2px solid #4a5568;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+        
+        .mobile-room-header .flex {
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .mobile-room-header .flex > div {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .mobile-room-header h1 {
+            font-size: 1.125rem;
+            line-height: 1.3;
+            word-break: break-word;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .mobile-room-header p {
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            color: #a0aec0;
+        }
+        
+        .mobile-room-header button {
+            font-size: 0.875rem;
+            padding: 0.75rem 1rem;
+            white-space: nowrap;
+            min-height: 48px;
+            border-radius: 12px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-room-header button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        }
+        
+        /* Status badges mobile optimization */
+        .mobile-status-badge {
+            font-size: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            white-space: nowrap;
+            border-radius: 20px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        /* Mobile chat toggle button enhancement */
+        #chatToggleBtn {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #3182ce 0%, #2b6cb0 100%);
+            border: 2px solid rgba(255,255,255,0.2);
+            box-shadow: 0 8px 24px rgba(49, 130, 206, 0.4);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        #chatToggleBtn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 12px 32px rgba(49, 130, 206, 0.5);
+        }
+        
+        #chatToggleBtn:active {
+            transform: translateY(-1px) scale(1.02);
+        }
+        
+        /* Mobile landscape optimization */
+        @media (max-width: 770px) and (orientation: landscape) {
+            .video-container {
+                height: calc(100vh - 80px);
+            }
+            
+            .mobile-room-header {
+                padding: 0.5rem 1rem;
+            }
+            
+            .mobile-controls {
+                padding: 0.5rem 1rem;
+            }
+        }
+    }
+    
+    @media (min-width: 771px) {
+        #chatSidebar {
+            transform: none !important;
+            position: static !important;
+            width: 20rem;
+            height: auto;
+            box-shadow: none;
+            border-radius: 0;
+        }
+        #chatToggleBtn {
+            display: none !important;
+        }
+    }
+    
+    /* Dark mode optimizations */
+    @media (prefers-color-scheme: dark) {
+        .bg-discord-darkest {
+            background-color: #0f1419;
+        }
+        
+        .bg-discord-darker {
+            background-color: #1a202c;
+        }
+        
+        .bg-discord-dark {
+            background-color: #2d3748;
+        }
+    }
+    
+    /* Mobile touch optimizations */
+    @media (max-width: 770px) {
+        /* Prevent text selection on buttons */
+        button {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* Improve touch targets */
+        input, button, select, textarea {
+            font-size: 16px !important; /* Prevents zoom on iOS */
+        }
+        
+        /* Better scrolling for chat */
+        #chatMessages {
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+        }
+        
+        /* Improve video container touch */
+        .video-container {
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        /* Mobile-friendly focus states */
+        input:focus, button:focus {
+            outline: 2px solid #3182ce;
+            outline-offset: 2px;
+        }
+        
+        /* Enhanced mobile animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+        
+        @keyframes fadeInUp {
+            from { 
+                opacity: 0; 
+                transform: translateY(20px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+        
+        /* Apply animations */
+        .mobile-controls {
+            animation: fadeInUp 0.5s ease-out;
+        }
+        
+        .video-container {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        #chatSidebar.open {
+            animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Enhanced button hover effects */
+        button:hover {
+            transform: translateY(-2px);
+            transition: all 0.3s ease;
+        }
+        
+        /* Improved mobile shadows */
+        .mobile-room-header,
+        .mobile-controls,
+        #chatSidebar {
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex h-screen bg-discord-darkest" data-video-type="{{ room.current_video_type or '' }}" {% if member.role == 'host' %}data-host="true"{% endif %} data-user-id="{{ current_user.id }}">
+    <!-- Video Section -->
+    <div class="flex-1 flex flex-col">
+        <!-- Room Header -->
+        <div class="bg-discord-darker p-4 border-b border-gray-600 mobile-room-header">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-xl font-bold text-white">{{ room.name }}</h1>
+                    <p class="text-discord-text">Room Code: <span class="font-mono">{{ room.room_code }}</span></p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    {% if member.role == 'host' %}
+                        <span class="px-3 py-1 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full text-sm mobile-status-badge">
+                            <i class="fas fa-crown mr-1"></i>Host
+                        </span>
+                    {% else %}
+                        <span class="px-3 py-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full text-sm mobile-status-badge">
+                            <i class="fas fa-user mr-1"></i>Guest
+                        </span>
+                    {% endif %}
+                    <form method="POST" action="{{ url_for('leave_room', room_code=room.room_code) }}" class="inline">
+                        <button type="submit" 
+                                class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-4 py-2 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
+                                onclick="return confirm('Are you sure you want to leave this room?')">
+                            <i class="fas fa-door-open mr-1"></i>Leave
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Controls (Host Only) -->
+        {% if member.role == 'host' %}
+        <div class="bg-discord-dark p-4 border-b border-gray-600 mobile-controls">
+            <div class="space-y-4">
+                <!-- YouTube URL Input -->
+                <div class="flex space-x-2">
+                    <input type="text" 
+                           id="youtubeUrl" 
+                           placeholder="Paste YouTube URL here..." 
+                           class="flex-1 px-4 py-2 bg-discord-darkest border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-discord-accent">
+                    <button onclick="loadYouTubeVideo()" 
+                            class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-2 rounded-lg font-medium transition-all duration-300 shadow-lg hover:shadow-xl">
+                        <i class="fab fa-youtube mr-2"></i>Load
+                    </button>
+                </div>
+
+                <!-- File Upload -->
+                <div class="flex items-center space-x-2">
+                    <input type="file" 
+                           id="videoFile" 
+                           accept="video/*" 
+                           class="hidden">
+                    <button onclick="document.getElementById('videoFile').click()" 
+                            class="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-6 py-2 rounded-lg font-medium transition-all duration-300 shadow-lg hover:shadow-xl">
+                        <i class="fas fa-upload mr-2"></i>Upload Video
+                    </button>
+                    <div id="uploadProgress" class="hidden">
+                        <div class="bg-gray-700 rounded-full h-2 w-32">
+                            <div id="uploadBar" class="bg-green-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Mobile-friendly upload progress -->
+                <div id="mobileUploadProgress" class="hidden">
+                    <div class="bg-gradient-to-r from-gray-700 to-gray-600 rounded-xl p-4 border border-gray-600">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-cloud-upload-alt text-blue-400 text-lg"></i>
+                                <span class="text-sm font-medium text-gray-200">Uploading Video...</span>
+                            </div>
+                            <span id="uploadPercentage" class="text-sm font-bold text-green-400">0%</span>
+                        </div>
+                        <div class="bg-gray-800 rounded-full h-3 overflow-hidden">
+                            <div id="mobileUploadBar" class="bg-gradient-to-r from-green-400 to-green-500 h-3 rounded-full transition-all duration-300 shadow-lg" style="width: 0%"></div>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-400 text-center">
+                            Please wait while your video is being uploaded...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+                <!-- Video Container -->
+        <div class="flex-1 bg-black video-container" id="videoContainer">
+            <!-- Video refresh indicator -->
+            <div id="videoRefreshIndicator" class="hidden absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center z-10">
+                <div class="text-center text-white">
+                    <i class="fas fa-sync-alt fa-spin text-4xl mb-4"></i>
+                    <p class="text-lg">Loading new video...</p>
+                </div>
+            </div>
+            
+            {% if room.current_video_type == 'youtube' and room.current_video_url %}
+                <div id="youtubePlayer" class="w-full h-full" data-video-url="{{ room.current_video_url }}"></div>
+            {% elif room.current_video_type == 'local' and room.current_video_url %}
+                <video id="localVideo" {% if member.role == 'host' %}controls{% endif %} class="w-full h-full">
+                    <source src="{{ room.current_video_url }}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            {% else %}
+                <div class="flex items-center justify-center h-full text-gray-400">
+                    <div class="text-center">
+                        <i class="fas fa-video text-6xl mb-4"></i>
+                        <p class="text-xl">No video loaded</p>
+                        <p class="text-sm mt-2">Use the controls above to load a video</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Chat Toggle Button (Mobile Only) -->
+    <button id="chatToggleBtn" class="fixed bottom-6 left-1 z-50 bg-discord-accent text-white p-4 rounded-full shadow-lg md:hidden">
+        <i class="fas fa-comments text-2xl"></i>
+        <span id="unreadBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold hidden">0</span>
+    </button>
+    
+
+
+    <!-- Chat Sidebar -->
+    <div id="chatSidebar" class="w-80 bg-discord-darker flex flex-col chat-container transition-transform duration-300 md:translate-x-0 fixed md:static right-0 top-0 h-full z-40" style="transform: translateX(100%);">
+        <!-- Chat Header -->
+        <div class="p-4 border-b border-gray-600 mobile-chat-header">
+            <h2 class="text-lg font-semibold text-white flex items-center">
+                <i class="fas fa-comments mr-2"></i>Chat
+            </h2>
+        </div>
+
+        <!-- Members List -->
+        <div class="p-4 border-b border-gray-600 mobile-members">
+            <h3 class="text-sm font-semibold text-discord-text uppercase tracking-wide mb-2 member-count">
+                Members ({{ members|length }})
+            </h3>
+            <div class="space-y-2">
+                {% for room_member in members %}
+                    <div class="flex items-center space-x-2">
+                        {% if room_member.user.profile_image_url %}
+                            <img src="{{ room_member.user.profile_image_url }}" 
+                                 alt="Profile" 
+                                 class="w-6 h-6 rounded-full object-cover">
+                        {% else %}
+                            <div class="w-6 h-6 bg-discord-accent rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-white text-xs"></i>
+                            </div>
+                        {% endif %}
+                        <span class="text-discord-text text-sm">{{ room_member.user.display_name }}</span>
+                        {% if room_member.role == 'host' %}
+                            <i class="fas fa-crown text-yellow-500 text-xs"></i>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Chat Messages -->
+        <div id="chatMessages" class="flex-1 p-4 space-y-3 overflow-y-auto">
+            {% for message in messages %}
+                <div class="message">
+                    {% if message.message_type == 'system' %}
+                        <div class="text-center">
+                            <span class="text-xs text-gray-500 bg-discord-darkest px-2 py-1 rounded">
+                                {{ message.message }}
+                            </span>
+                        </div>
+                    {% else %}
+                        <div class="space-y-1">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-sm font-medium text-white">{{ message.user.display_name }}</span>
+                                <span class="text-xs text-gray-500">{{ message.formatted_time }}</span>
+                            </div>
+                            <p class="text-discord-text text-sm">{{ message.message }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Chat Input -->
+        <div class="p-4 mb-12 border-t border-gray-600 mobile-chat-input">
+            <form id="chatForm" class="flex space-x-2">
+                <input type="text" 
+                       id="chatInput" 
+                       placeholder="Type a message..." 
+                       class="flex-1 px-3 py-2 bg-discord-darkest border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-discord-accent text-sm">
+                <button type="submit" 
+                        class="bg-discord-accent hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- YouTube API -->
+<script src="https://www.youtube.com/iframe_api"></script>
+
+<!-- Room-specific JavaScript -->
+<script src="{{ url_for('static', filename='room.js') }}"></script>
+
+<script>
+    // Initialize room when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        // Room initialization is handled by room.js
+        const chatSidebar = document.getElementById('chatSidebar');
+        const chatToggleBtn = document.getElementById('chatToggleBtn');
+
+        function handleResize() {
+            if (window.innerWidth <= 770) {
+                chatSidebar.classList.remove('open');
+                chatSidebar.style.transform = 'translateX(100%)';
+                chatToggleBtn.style.display = 'block';
+            } else {
+                chatSidebar.classList.add('open');
+                chatSidebar.style.transform = 'none';
+                chatToggleBtn.style.display = 'none';
+            }
+        }
+
+        // Chat toggle button event listener is handled by room.js setupMobileChatToggle()
+        // No need to add another event listener here
+
+        // Handle chat visibility changes
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    if (typeof handleChatVisibilityChange === 'function') {
+                        handleChatVisibilityChange();
+                    }
+                }
+            });
+        });
+
+        if (chatSidebar) {
+            observer.observe(chatSidebar, { attributes: true });
+        }
+
+        // Initialize button visibility on page load
+        handleResize();
+        
+        // Add resize listener
+        // window.addEventListener('resize', handleResize);
+    });
+</script>
+{% endblock %}

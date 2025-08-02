@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Users - Admin{% endblock %}
+
+{% block head %}
+<style>
+    .admin-card {
+        background: #2a2b30;
+        border: 1px solid #3a3b40;
+        transition: all 0.3s ease;
+    }
+    .admin-card:hover {
+        border-color: #667eea;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    }
+    .user-row {
+        transition: all 0.3s ease;
+    }
+    .user-row:hover {
+        background: #3a3b40;
+    }
+    .loading-spinner {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #667eea;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-discord-darkest">
+    <!-- Header -->
+    <header class="bg-discord-darker shadow-lg border-b border-gray-600">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-white">Manage Users</h1>
+                    <p class="text-discord-text mt-1">User management and moderation</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{{ url_for('admin_dashboard') }}" class="bg-discord-accent hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="admin-card rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-500 bg-opacity-20">
+                        <i class="fas fa-users text-blue-500 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-discord-text text-sm">Total Users</p>
+                        <p class="text-2xl font-bold text-white">{{ users.total }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="admin-card rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-500 bg-opacity-20">
+                        <i class="fas fa-crown text-yellow-500 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-discord-text text-sm">Admins</p>
+                        <p class="text-2xl font-bold text-white">{{ users.items|selectattr('is_admin', 'equalto', true)|list|length }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="admin-card rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-red-500 bg-opacity-20">
+                        <i class="fas fa-ban text-red-500 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-discord-text text-sm">Banned Users</p>
+                        <p class="text-2xl font-bold text-white">{{ users.items|selectattr('is_banned', 'equalto', true)|list|length }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="admin-card rounded-lg p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-white">All Users</h3>
+                <div class="flex items-center space-x-4">
+                    <input type="text" 
+                           id="searchUsers" 
+                           placeholder="Search users..." 
+                           class="px-4 py-2 bg-discord-darkest border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-discord-accent">
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-gray-600">
+                            <th class="text-left py-3 px-4 text-discord-text font-medium">User</th>
+                            <th class="text-left py-3 px-4 text-discord-text font-medium">Email</th>
+                            <th class="text-left py-3 px-4 text-discord-text font-medium">Status</th>
+                            <th class="text-left py-3 px-4 text-discord-text font-medium">Joined</th>
+                            <th class="text-left py-3 px-4 text-discord-text font-medium">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users.items %}
+                        <tr class="user-row border-b border-gray-700" data-user-id="{{ user.id }}">
+                            <td class="py-4 px-4">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-discord-accent rounded-full flex items-center justify-center">
+                                        <i class="fas fa-user text-white"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-white font-medium">{{ user.display_name }}</p>
+                                        <p class="text-discord-text text-sm">@{{ user.username }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-4 px-4">
+                                <p class="text-discord-text">{{ user.email }}</p>
+                            </td>
+                            <td class="py-4 px-4">
+                                <div class="flex items-center space-x-2">
+                                    {% if user.is_admin %}
+                                        <span class="px-2 py-1 bg-yellow-600 text-white text-xs rounded-full">Admin</span>
+                                    {% endif %}
+                                    {% if user.is_banned %}
+                                        <span class="px-2 py-1 bg-red-600 text-white text-xs rounded-full">Banned</span>
+                                    {% else %}
+                                        <span class="px-2 py-1 bg-green-600 text-white text-xs rounded-full">Active</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="py-4 px-4">
+                                <p class="text-discord-text text-sm">{{ user.created_at.strftime('%Y-%m-%d') }}</p>
+                            </td>
+                            <td class="py-4 px-4">
+                                <div class="flex items-center space-x-2">
+                                    {% if not user.is_admin %}
+                                        <button onclick="promoteUser({{ user.id }})" 
+                                                class="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white text-xs rounded transition-colors">
+                                            <i class="fas fa-crown mr-1"></i>Promote
+                                        </button>
+                                    {% endif %}
+                                    {% if user.is_banned %}
+                                        <button onclick="unbanUser({{ user.id }})" 
+                                                class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors">
+                                            <i class="fas fa-unlock mr-1"></i>Unban
+                                        </button>
+                                    {% else %}
+                                        <button onclick="banUser({{ user.id }})" 
+                                                class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition-colors">
+                                            <i class="fas fa-ban mr-1"></i>Ban
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if users.pages > 1 %}
+            <div class="flex items-center justify-between mt-6">
+                <div class="text-discord-text text-sm">
+                    Showing {{ users.items|length }} of {{ users.total }} users
+                </div>
+                <div class="flex items-center space-x-2">
+                    {% if users.has_prev %}
+                        <a href="{{ url_for('admin_users', page=users.prev_num) }}" 
+                           class="px-3 py-2 bg-discord-accent hover:bg-blue-600 text-white rounded transition-colors">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    {% endif %}
+                    
+                    <span class="text-discord-text px-3 py-2">
+                        Page {{ users.page }} of {{ users.pages }}
+                    </span>
+                    
+                    {% if users.has_next %}
+                        <a href="{{ url_for('admin_users', page=users.next_num) }}" 
+                           class="px-3 py-2 bg-discord-accent hover:bg-blue-600 text-white rounded transition-colors">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Search functionality
+    document.getElementById('searchUsers').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('.user-row');
+        
+        rows.forEach(row => {
+            const userName = row.querySelector('p').textContent.toLowerCase();
+            const userEmail = row.querySelectorAll('p')[1].textContent.toLowerCase();
+            
+            if (userName.includes(searchTerm) || userEmail.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+
+    // Admin actions
+    function promoteUser(userId) {
+        if (confirm('Are you sure you want to promote this user to admin?')) {
+            fetch('/admin/api/promote_user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ user_id: userId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred');
+            });
+        }
+    }
+
+    function banUser(userId) {
+        if (confirm('Are you sure you want to ban this user?')) {
+            fetch('/admin/api/ban_user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ user_id: userId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred');
+            });
+        }
+    }
+
+    function unbanUser(userId) {
+        if (confirm('Are you sure you want to unban this user?')) {
+            fetch('/admin/api/unban_user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ user_id: userId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred');
+            });
+        }
+    }
+</script>
+{% endblock %} 
