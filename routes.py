@@ -545,6 +545,41 @@ def not_found(error):
 def internal_error(error):
     return render_template('403.html', error_message="Internal server error"), 500
 
+# Admin creation route (secure - requires environment variables)
+@app.route('/create-admin')
+def create_admin():
+    """Secure route to create admin user using environment variables"""
+    try:
+        # Check if admin already exists
+        admin_user = User.query.filter_by(is_admin=True).first()
+        if admin_user:
+            return f"Admin user already exists: {admin_user.username}"
+        
+        # Get admin credentials from environment variables
+        admin_username = os.environ.get("ADMIN_USERNAME", "admin")
+        admin_password = os.environ.get("ADMIN_PASSWORD", "admin123")
+        admin_email = os.environ.get("ADMIN_EMAIL", "admin@watchwithme.com")
+        admin_first_name = os.environ.get("ADMIN_FIRST_NAME", "Admin")
+        admin_last_name = os.environ.get("ADMIN_LAST_NAME", "User")
+        
+        # Create admin user with environment variables
+        admin = User()
+        admin.username = admin_username
+        admin.email = admin_email
+        admin.first_name = admin_first_name
+        admin.last_name = admin_last_name
+        admin.is_admin = True
+        admin.is_banned = False
+        admin.set_password(admin_password)
+        
+        db.session.add(admin)
+        db.session.commit()
+        
+        return f"Admin user created successfully! Username: {admin_username}, Password: [from environment variable]"
+        
+    except Exception as e:
+        return f"Error creating admin: {str(e)}"
+
 
 
 # ==================== ADMIN ROUTES ====================
