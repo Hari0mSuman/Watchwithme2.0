@@ -22,7 +22,10 @@ app.secret_key = os.environ.get("SESSION_SECRET")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1) # needed for url_for to generate with https
 
 # configure the database, relative to the app instance folder
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL","sqlite:///app.db")
+database_url = os.environ.get("DATABASE_URL", "sqlite:///app.db")
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,
@@ -148,5 +151,35 @@ with app.app_context():
     import models  # noqa: F401
     db.create_all()
     logging.info("Database tables created")
+    
+    # Auto-create admin user if it doesn't exist
+    from models import User
+    admin_user = User.query.filter_by(is_admin=True).first()
+    if not admin_user:
+        # Get admin credentials from environment variables
+        admin_username = os.environ.get("ADMIN_USERNAME", "admin")
+        admin_password = os.environ.get("ADMIN_PASSWORD", "admin123")
+        admin_email = os.environ.get("ADMIN_EMAIL", "admin@watchwithme.com")
+        admin_first_name = os.environ.get("ADMIN_FIRST_NAME", "Admin")
+        admin_last_name = os.environ.get("ADMIN_LAST_NAME", "User")
+        
+        admin = User()
+        admin.username = admin_username
+        admin.email = admin_email
+        admin.first_name = admin_first_name
+        admin.last_name = admin_last_name
+        admin.is_admin = True
+        admin.is_banned = False
+        admin.set_password(admin_password)
+        
+        db.session.add(admin)
+        db.session.commit()
+        logging.info(f"Admin user created: {admin_username}/[password from env]")
+    else:
+        # Reset admin password to environment variable value
+        admin_password = os.environ.get("ADMIN_PASSWORD", "admin123")
+        admin_user.set_password(admin_password)
+        db.session.commit()
+        logging.info("Admin password reset from environment variable")
 
 
